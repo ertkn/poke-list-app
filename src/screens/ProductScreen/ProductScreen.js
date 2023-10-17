@@ -1,4 +1,4 @@
-import {View, Text, StyleSheet, FlatList, ActivityIndicator, Button} from 'react-native';
+import {View, Text, StyleSheet, FlatList, ActivityIndicator, TextInput, Alert} from 'react-native';
 import React, {useEffect, useState} from 'react';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import CustomTouchableOpacity from '../../components/touchableOpacity';
@@ -6,11 +6,12 @@ import axios from 'axios';
 import navStrings from '../../constants/navStrings';
 import literals from '../../constants/literals';
 import getSearchParamFromURL from '../../components/getSearchParamFromURL';
+import windowMeasure from '../../constants/windowMeasure';
 
-const InnerComponent = ({item, textStyle, viewStyle}) => {
+const InnerComponent = ({item, textStyle, viewStyle, upCase = false}) => {
   return (
     <View style={[styles.txtBoxStyle, viewStyle]}>
-      <Text style={[styles.titleStyle, textStyle]}>{item.toUpperCase()}</Text>
+      <Text style={[styles.titleStyle, textStyle]}>{upCase ? item : item.toUpperCase()}</Text>
     </View>
   );
 };
@@ -34,6 +35,10 @@ const ProductScreen = ({navigation}) => {
   const [nextPokeUrl, setNextPokeUrl] = useState();
   const [prevPokeUrl, setPrevPokeUrl] = useState();
   const [offset, setOffSet] = useState();
+  const [searchBarValue, setSearchBarValue] = useState('');
+  const [isPokeExist, setIsPokeExist] = useState(false);
+  const [isLoadingSearch, setIsLoadingSearch] = useState(false);
+  const [pokeSearch, setPokeSearch] = useState({});
 
   async function getPokeAxios(controller) {
     axios
@@ -58,7 +63,7 @@ const ProductScreen = ({navigation}) => {
           setErrorFlag(true);
           setLoading(false);
         }
-        console.log(err);
+        console.log('Fetching has failed... ' + err);
       })
       .finally(() => {
         console.log('POKES READY!');
@@ -86,12 +91,145 @@ const ProductScreen = ({navigation}) => {
     };
   }, [hasError, currentUrl]);
 
+  const searchFilterFunction = text => {
+    // Check if searched text is not blank
+    if (text) {
+      // Inserted text is not blank
+      // Filter the masterDataSource and update FilteredDataSource
+      const newData = masterDataSource.filter(function (item) {
+        // Applying filter for the inserted text in search bar
+        const itemData = item.title ? item.title.toUpperCase() : ''.toUpperCase();
+        const textData = text.toUpperCase();
+        return itemData.indexOf(textData) > -1;
+      });
+      setFilteredDataSource(newData);
+      setSearch(text);
+    } else {
+      // Inserted text is blank
+      // Update FilteredDataSource with masterDataSource
+      setFilteredDataSource(masterDataSource);
+      setSearch(text);
+    }
+  };
+
+  async function searchPokeFunc(searchBarValue) {
+    setIsLoadingSearch(true);
+    const pokeSearchJson = {};
+    const pokeUrl = literals.POKE_URL + searchBarValue;
+    console.log('pokeUrl', pokeUrl);
+    axios
+      .get(pokeUrl)
+      .then(async pokeRes => {
+        setIsPokeExist(true);
+        pokeSearchJson.url = literals.POKE_URL + searchBarValue;
+        pokeSearchJson.name = pokeRes.data.name;
+        setPokeSearch(pokeSearchJson);
+        setIsLoadingSearch(false);
+        // console.log('name: %o url: %o', pokeSearchJson.name, pokeSearchJson.url);
+        // return {name: pokeSearchJson.name, url: pokeSearchJson.url};
+      })
+      .catch(async err => {
+        pokeExistFlag = false;
+        setIsPokeExist(false);
+        console.log('err', err);
+        console.log('isPokeExist err: ', isPokeExist);
+        await showAlert();
+      })
+      .finally(() => {
+        setIsLoadingSearch(false);
+        // setIsLoadingSearch(false);
+        //         if (!isEmpty(pokeSearch.toString()) && !isPokeExist) {
+        //   console.log('first: ', isEmpty(pokeSearch.toString()), isPokeExist);
+        //   showAlert();
+        // }
+        // console.log('isPokeExist IN: ', isPokeExist);
+        // setIsPokeExist(false);
+      });
+  }
+
+  useEffect(() => {
+    console.log('pokeSearch: %o', pokeSearch);
+    if (pokeSearch.name && pokeSearch.url && isPokeExist) {
+      pokeNavFunc(navigation, pokeSearch);
+    }
+
+    return () => {
+      console.log('\n');
+      console.log('routes to poke details...');
+    };
+  }, [pokeSearch]);
+
+  const isEmpty = str => !str?.length;
+
+  const showAlert = async () => {
+    Alert.alert(
+      'Pokemon Search Result',
+      'There is no such that pokemon... Please try something else!',
+      [
+        {
+          text: 'OK',
+          style: 'default',
+          onPress: () => {
+            setIsLoadingSearch(false);
+          },
+        },
+      ],
+      {
+        cancelable: true,
+        onDismiss: () => {
+          setIsLoadingSearch(false);
+        },
+      },
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       {loading ? (
         <ActivityIndicator size="large" />
       ) : (
         <View style={styles.container}>
+          <View style={styles.searchBarContainer}>
+            <TextInput
+              onc
+              style={[styles.textInputStyle, isEmpty(searchBarValue) ? {flex: 0.95} : {}]}
+              onChangeText={text => setSearchBarValue(text)}
+              value={searchBarValue}
+              underlineColorAndroid="transparent"
+              placeholder="Search Poke"
+              placeholderTextColor="black"
+            />
+            {isEmpty(searchBarValue) || isLoadingSearch ? (
+              <></>
+            ) : (
+              <CustomTouchableOpacity
+                buttonStyle={[{margin: '1%', height: '100%', flex: 0.15, paddingRight: '2%'}]}
+                onPress={async () => {
+                  console.log('searchBarValue: ', searchBarValue);
+                  if (searchBarValue && searchBarValue !== '' && searchBarValue.length !== 0) {
+                    await searchPokeFunc(searchBarValue);
+                  }
+                }}>
+                <InnerComponent
+                  item={'Search'}
+                  textStyle={{
+                    textAlign: 'center',
+                    fontSize: 12,
+                    marginVertical: '0%',
+                    marginHorizontal: '0%',
+                  }}
+                  viewStyle={{
+                    height: '100%',
+                    marginVertical: '0%',
+                    marginHorizontal: '0%',
+                    justifyContent: 'center',
+                    backgroundColor: '#d6c4c4',
+                  }}
+                  upCase={true}
+                />
+              </CustomTouchableOpacity>
+            )}
+          </View>
           <FlatList
             data={poke}
             renderItem={({item}) => (
@@ -113,8 +251,26 @@ const ProductScreen = ({navigation}) => {
                 onPress={() => {
                   goToPrev();
                 }}
-                buttonStyle={styles.buttonStyle}>
-                <InnerComponent item={'< Prev'} textStyle={{textAlign: 'center'}} />
+                buttonStyle={[{marginHorizontal: '1%', height: '100%', justifyContent: 'center'}]}>
+                <InnerComponent
+                  upCase={true}
+                  item={'< Prev'}
+                  textStyle={{
+                    textAlign: 'center',
+                    fontSize: 15,
+                    marginVertical: '0%',
+                    marginHorizontal: '1%',
+                    paddingVertical: '0%',
+                    paddingHorizontal: '1%',
+                  }}
+                  viewStyle={{
+                    marginVertical: '0%',
+                    marginHorizontal: '1%',
+                    height: '75%',
+                    justifyContent: 'center',
+                    // backgroundColor: '#d6c4c4',
+                  }}
+                />
               </CustomTouchableOpacity>
             )}
             {offset > 100 && (
@@ -123,8 +279,26 @@ const ProductScreen = ({navigation}) => {
                 onPress={() => {
                   goToTop();
                 }}
-                buttonStyle={styles.buttonStyle}>
-                <InnerComponent item={'Reset!'} textStyle={{textAlign: 'center'}} />
+                buttonStyle={[{marginHorizontal: '1%', height: '100%', justifyContent: 'center'}]}>
+                <InnerComponent
+                  upCase={true}
+                  item={'Reset'}
+                  textStyle={{
+                    textAlign: 'center',
+                    fontSize: 15,
+                    marginVertical: '0%',
+                    marginHorizontal: '1%',
+                    paddingVertical: '0%',
+                    paddingHorizontal: '1%',
+                  }}
+                  viewStyle={{
+                    marginVertical: '0%',
+                    marginHorizontal: '1%',
+                    height: '75%',
+                    justifyContent: 'center',
+                    // backgroundColor: '#d6c4c4',
+                  }}
+                />
               </CustomTouchableOpacity>
             )}
             {nextPokeUrl && (
@@ -133,8 +307,28 @@ const ProductScreen = ({navigation}) => {
                 onPress={() => {
                   goToNext();
                 }}
-                buttonStyle={styles.buttonStyle}>
-                <InnerComponent item={'Next >'} textStyle={{textAlign: 'center'}} />
+                buttonStyle={[{marginHorizontal: '1%', height: '100%', justifyContent: 'center'}]}>
+                <InnerComponent
+                  upCase={true}
+                  item={'Next >'}
+                  textStyle={{
+                    textAlign: 'center',
+                    fontSize: 15,
+                    // margin:'1%',
+                    // padding:'1%',
+                    marginVertical: '0%',
+                    marginHorizontal: '1%',
+                    paddingVertical: '0%',
+                    paddingHorizontal: '1%',
+                  }}
+                  viewStyle={{
+                    marginVertical: '0%',
+                    marginHorizontal: '1%',
+                    justifyContent: 'center',
+                    height: '75%',
+                    // backgroundColor: '#d6c4c4',
+                  }}
+                />
               </CustomTouchableOpacity>
             )}
           </View>
@@ -146,15 +340,31 @@ const ProductScreen = ({navigation}) => {
 
 const styles = StyleSheet.create({
   container: {
+    // backgroundColor: '#f1f1f1',
     flex: 1,
   },
 
+  searchBarContainer: {
+    flexDirection: 'row',
+    // flexWrap: 'wrap',
+    justifyContent: 'flex-start',
+    height: (windowMeasure.windowHeight * 5) / 100,
+    width: windowMeasure.windowWidth,
+    marginBottom: '2.5%',
+    marginTop: '0.5%',
+  },
+
   paginationButtonContainer: {
+    // alignContent: 'center',
+    // alignItems: 'center',
+    // verticalAlign: 'middle',
+    // textAlign: 'center',
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-evenly',
-    height: '7%',
+    justifyContent: 'center',
+    height: (windowMeasure.windowHeight * 5.5) / 100,
   },
+
   buttons: {
     width: '12%',
     height: '12%',
@@ -190,6 +400,20 @@ const styles = StyleSheet.create({
     // borderWidth: 0.5,
     // borderColor: 'green',
   },
+
+  textInputStyle: {
+    flex: 0.9,
+    height: (windowMeasure.windowHeight * 5) / 100,
+    // maxHeight: '10%',
+    // minHeight: '5%',
+    borderRadius: 20,
+    // borderWidth: 1,
+    paddingLeft: '4%',
+    margin: 5,
+    marginLeft: '3%',
+    // borderColor: '#009688',
+    backgroundColor: '#d6c4c4', //ada3a3
+  },
 });
 
 export default ProductScreen;
@@ -204,3 +428,39 @@ export default ProductScreen;
     const value = params[index + 2];
     return value;
   }; */
+
+/* console.log('pokeResDataResults: ', pokeRes.data.name);
+
+
+// const temp = true;
+setIsPokeExist(current => true);
+pokeExistFlag = true;
+setPokeSearch(pokeRes.data);
+console.log(
+  'then isPokeExist: %o pokeSearch.url: %o pokeSearch.name: %o',
+  isPokeExist,
+  pokeSearch.url,
+  pokeSearch,
+);
+ */
+
+// pokeNavFunc(navigation, pokeSearch);
+
+/* if (pokeTempJson.name && pokeTempJson.url) {
+                      console.log('pokeTempJson IN: %o', pokeTempJson);
+                      pokeNavFunc(navigation, pokeTempJson);
+                    } */
+
+/* if (isPokeExist && pokeSearch.name) {
+                      console.log('isPokeExist OUT', isPokeExist);
+                      console.log(
+                        'pokeSearch.name OUT %o pokeSearch.name OUT %o',
+                        pokeSearch.name,
+                        pokeSearch.url,
+                      );
+                      pokeNavFunc(navigation, {
+                        name: pokeSearch.name,
+                        url: literals.POKE_URL + searchBarValue,
+                      });
+                      setSearchBarValue();
+                    } */
