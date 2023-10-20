@@ -125,8 +125,6 @@ const ProductScreen = ({navigation}) => {
         pokeSearchJson.name = pokeRes.data.name;
         setPokeSearch(pokeSearchJson);
         setIsLoadingSearch(false);
-        // console.log('name: %o url: %o', pokeSearchJson.name, pokeSearchJson.url);
-        // return {name: pokeSearchJson.name, url: pokeSearchJson.url};
       })
       .catch(async err => {
         pokeExistFlag = false;
@@ -137,13 +135,6 @@ const ProductScreen = ({navigation}) => {
       })
       .finally(() => {
         setIsLoadingSearch(false);
-        // setIsLoadingSearch(false);
-        //         if (!isEmpty(pokeSearch.toString()) && !isPokeExist) {
-        //   console.log('first: ', isEmpty(pokeSearch.toString()), isPokeExist);
-        //   showAlert();
-        // }
-        // console.log('isPokeExist IN: ', isPokeExist);
-        // setIsPokeExist(false);
       });
   }
 
@@ -164,7 +155,7 @@ const ProductScreen = ({navigation}) => {
   const showAlert = async () => {
     Alert.alert(
       'Pokemon Search Result',
-      'There is no such that pokemon... Please try something else!',
+      'There is no such that pokemon...' + 'Please try something else!',
       [
         {
           text: 'OK',
@@ -191,7 +182,6 @@ const ProductScreen = ({navigation}) => {
         <View style={styles.container}>
           <View style={styles.searchBarContainer}>
             <TextInput
-              onc
               style={[styles.textInputStyle, isEmpty(searchBarValue) ? {flex: 0.95} : {}]}
               onChangeText={text => setSearchBarValue(text)}
               value={searchBarValue}
@@ -212,19 +202,8 @@ const ProductScreen = ({navigation}) => {
                 }}>
                 <InnerComponent
                   item={'Search'}
-                  textStyle={{
-                    textAlign: 'center',
-                    fontSize: 12,
-                    marginVertical: '0%',
-                    marginHorizontal: '0%',
-                  }}
-                  viewStyle={{
-                    height: '100%',
-                    marginVertical: '0%',
-                    marginHorizontal: '0%',
-                    justifyContent: 'center',
-                    backgroundColor: '#d6c4c4',
-                  }}
+                  textStyle={styles.searchButtonTextStyle}
+                  viewStyle={styles.searchButtonViewStyle}
                   upCase={true}
                 />
               </CustomTouchableOpacity>
@@ -251,25 +230,12 @@ const ProductScreen = ({navigation}) => {
                 onPress={() => {
                   goToPrev();
                 }}
-                buttonStyle={[{marginHorizontal: '1%', height: '100%', justifyContent: 'center'}]}>
+                buttonStyle={styles.customButtonStyle}>
                 <InnerComponent
                   upCase={true}
                   item={'< Prev'}
-                  textStyle={{
-                    textAlign: 'center',
-                    fontSize: 15,
-                    marginVertical: '0%',
-                    marginHorizontal: '1%',
-                    paddingVertical: '0%',
-                    paddingHorizontal: '1%',
-                  }}
-                  viewStyle={{
-                    marginVertical: '0%',
-                    marginHorizontal: '1%',
-                    height: '75%',
-                    justifyContent: 'center',
-                    // backgroundColor: '#d6c4c4',
-                  }}
+                  textStyle={styles.customSearchTextInputStyle}
+                  viewStyle={styles.customSearchViewStyle}
                 />
               </CustomTouchableOpacity>
             )}
@@ -279,25 +245,12 @@ const ProductScreen = ({navigation}) => {
                 onPress={() => {
                   goToTop();
                 }}
-                buttonStyle={[{marginHorizontal: '1%', height: '100%', justifyContent: 'center'}]}>
+                buttonStyle={styles.customButtonStyle}>
                 <InnerComponent
                   upCase={true}
                   item={'Reset'}
-                  textStyle={{
-                    textAlign: 'center',
-                    fontSize: 15,
-                    marginVertical: '0%',
-                    marginHorizontal: '1%',
-                    paddingVertical: '0%',
-                    paddingHorizontal: '1%',
-                  }}
-                  viewStyle={{
-                    marginVertical: '0%',
-                    marginHorizontal: '1%',
-                    height: '75%',
-                    justifyContent: 'center',
-                    // backgroundColor: '#d6c4c4',
-                  }}
+                  textStyle={styles.customSearchTextInputStyle}
+                  viewStyle={styles.customSearchViewStyle}
                 />
               </CustomTouchableOpacity>
             )}
@@ -307,27 +260,12 @@ const ProductScreen = ({navigation}) => {
                 onPress={() => {
                   goToNext();
                 }}
-                buttonStyle={[{marginHorizontal: '1%', height: '100%', justifyContent: 'center'}]}>
+                buttonStyle={styles.customButtonStyle}>
                 <InnerComponent
                   upCase={true}
                   item={'Next >'}
-                  textStyle={{
-                    textAlign: 'center',
-                    fontSize: 15,
-                    // margin:'1%',
-                    // padding:'1%',
-                    marginVertical: '0%',
-                    marginHorizontal: '1%',
-                    paddingVertical: '0%',
-                    paddingHorizontal: '1%',
-                  }}
-                  viewStyle={{
-                    marginVertical: '0%',
-                    marginHorizontal: '1%',
-                    justifyContent: 'center',
-                    height: '75%',
-                    // backgroundColor: '#d6c4c4',
-                  }}
+                  textStyle={styles.customSearchTextInputStyle}
+                  viewStyle={styles.customSearchViewStyle}
                 />
               </CustomTouchableOpacity>
             )}
@@ -339,6 +277,39 @@ const ProductScreen = ({navigation}) => {
 };
 
 const styles = StyleSheet.create({
+  searchButtonTextStyle: {
+    textAlign: 'center',
+    fontSize: 12,
+    marginVertical: '0%',
+    marginHorizontal: '0%',
+  },
+  searchButtonViewStyle: {
+    height: '100%',
+    marginVertical: '0%',
+    marginHorizontal: '0%',
+    justifyContent: 'center',
+    backgroundColor: '#d6c4c4',
+  },
+  customSearchTextInputStyle: {
+    textAlign: 'center',
+    fontSize: 15,
+    marginVertical: '0%',
+    marginHorizontal: '1%',
+    paddingVertical: '0%',
+    paddingHorizontal: '1%',
+  },
+  customSearchViewStyle: {
+    marginVertical: '0%',
+    marginHorizontal: '1%',
+    justifyContent: 'center',
+    height: '75%',
+  },
+  customButtonStyle: {
+    marginHorizontal: '1%',
+    height: '100%',
+    justifyContent: 'center',
+  },
+
   container: {
     // backgroundColor: '#f1f1f1',
     flex: 1,

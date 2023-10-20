@@ -2,6 +2,7 @@ import {View, Text, StyleSheet, ActivityIndicator, Image} from 'react-native';
 import React, {useEffect, useState} from 'react';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import axios from 'axios';
+import literals from '../../constants/literals';
 
 const ProductDetailScreen = ({route, navigation}) => {
   const pokeNameAndURL = route.params;
@@ -109,7 +110,7 @@ const ProductDetailScreen = ({route, navigation}) => {
     };
   }, [abilityError]);
 
-    async function getAbilityDefinition(controller) {
+  async function getAbilityDefinition(controller) {
     setPokeAbilityDefinition([]);
 
     if (loading === false) {
@@ -185,8 +186,7 @@ const ProductDetailScreen = ({route, navigation}) => {
             }
           </Text>
           <View style={styles.pokeAbilityContainer}>
-            <Text style={styles.pokeAbilityTitleStyle}>Abilities</Text>
-
+            <Text style={styles.pokeAbilityTitleStyle}>{literals.POKE_ABILITY}</Text>
             {pokeAbilityDefinition.map((ability = {}, idx = 0) => {
               return (
                 <Text key={idx} style={styles.abilityTitleStyle}>
